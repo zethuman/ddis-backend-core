@@ -1,0 +1,62 @@
+version: '3.0'
+
+services:
+  ipfs:
+    container_name: ipfs
+    image: ipfs/go-ipfs:v0.8.0
+    command:
+      - "daemon"
+      - "--migrate=true"
+      - "--enable-pubsub-experiment"
+      - "--enable-namesys-pubsub"
+    volumes:
+      - ./DDIS-DATA/IPFS/export:/export
+      - ./DDIS-DATA/IPFS/data:/data/ipfs
+    networks:
+      - ddis
+    expose:
+      - 4001/udp
+      - 4001
+      - 8080
+      - 5001
+  app:
+    container_name: backend-core
+    image: ddis-backend-core:latest
+    environment:
+      - IPFS_HOST=/dns/backend-data/tcp/5001/http
+    ports:
+      - 4020:4020
+    networks:
+      - ddis
+    depends_on:
+      - ipfs
+    restart: on-failure
+    volumes:
+      - ./DDIS-DATA/ddis-backend-core/logs:/usr/src/ddis-backend-core/logs
+      - ./DDIS-DATA/ddis-backend-core/db:/usr/src/ddis-backend-core/db
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py migrate --run-syncdb && python manage.py runserver 0.0.0.0:4020"
+  data:
+    container_name: backend-data
+    image: ddis-backend-data:latest
+    environment:
+      - IPFS_HOST=/dns/ipfs/tcp/5001/http
+      - PORT=4010
+      - MASTER_NODE=/ip4/20.223.155.152/tcp/4002/p2p/12D3KooWCwiVZpvKCy3NT8G7wTcUgBx4VSZYUecpSkKyiUKwVpmo
+      - MASTER_DATABASE=/orbitdb/zdpuAztX5sy8NYSpRmbTjrFwKqBXPBeWgraxhB76g2HCRZJQQ/hub
+      - LOG="orbit*"
+    ports:
+      - 4010:4010
+    networks:
+      - ddis
+    depends_on:
+      - ipfs
+    restart: on-failure
+    volumes:
+      - ./DDIS-DATA/ddis-backend-data/ipfs:/usr/src/ddis-backend-data/ipfs
+      - ./DDIS-DATA/ddis-backend-data/orbitdb:/usr/src/ddis-backend-data/orbitdb
+    command: "npm start"
+networks:
+  ddis:
+    driver: bridge

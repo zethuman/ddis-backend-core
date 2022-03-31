@@ -48,3 +48,15 @@ def delete_an_image(request):
     except Exception as err:
         logger.error(data)
         return error_msg({"image_name": data["name"], "error": str(err)})
+
+
+@api_view(['DELETE'])
+@parser_classes([JSONParser])
+def clean_temp(request):
+    data = request.data
+    try:
+
+        return JsonResponse(data={"status": "clean"})
+    except Exception as err:
+        logger.error(data)
+        return error_msg(str(err))

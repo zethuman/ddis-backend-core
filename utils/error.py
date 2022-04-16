@@ -5,4 +5,4 @@ def error_msg(msg):
     return JsonResponse(data={
         "status": "failed",
         "message": msg
-    }, safe=True)
+    }, safe=True, status=500)

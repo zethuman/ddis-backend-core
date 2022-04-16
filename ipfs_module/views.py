@@ -1,8 +1,11 @@
+import json
 import shutil
+from sqlite3 import converters
 import django
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import JSONParser
 from django.http import JsonResponse
+from django.core import serializers
 
 from utils.error import error_msg
 from .models import Images
@@ -27,29 +30,13 @@ except Exception as e:
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
-def pull_an_image_by_name(request):
-    data = request.data
-    hash = ""
+def all_images(request):
     try:
-        hash = Images.objects.get(imagename=data["name"], tag=data["tag"]).hash
-        print(hash)
-    except Images.DoesNotExist:
-        logger.error("image does not exist locally")
-        # logic for global search
+        all = Images.objects.all()
+        converted = serializers.serialize('json', all)
     except Exception as e:
-        logger.error(e)
         return error_msg(str(e))
-    path = tempfile.gettempdir()
-    if hash:
-        try:
-            with ipfshttpclient.connect(addr=host) as ipfs:
-                ipfs.get(hash, target=path, compress=True)
-        except Exception as e:
-            return error_msg(str(e))
-        load(hash)
-        return JsonResponse(data={"status": "success"}, safe=True)
-    else:
-        return error_msg("can not find image")
+    return JsonResponse(data={"status": "success", "all": json.loads(converted)}, safe=False)
 
 
 @api_view(['POST'])
@@ -58,7 +45,7 @@ def pull_an_image_by_hash(request):
     data = request.data
     path = tempfile.gettempdir()
     try:
-        with ipfshttpclient.connect(addr=host) as ipfs:
+        with ipfshttpclient.connect(addr=host, timeout=3600) as ipfs:
             ipfs.get(data["hash"], target=path, compress=True)
     except Exception as e:
         return error_msg(str(e))
@@ -91,7 +78,7 @@ def push_an_image(request):
             hashobject.update(chunk)
     if not Images.objects.find_image_by_file_hash(file_hash=hashobject.hexdigest()).exists():
         try:
-            with ipfshttpclient.connect(addr=host) as ipfs:
+            with ipfshttpclient.connect(addr=host, timeout=3600) as ipfs:
                 res = ipfs.add(tmp.name, pin=True)
                 pin_hash(data['name'], data['tag'])
                 logger.info(ipfs.repo)
@@ -121,7 +108,7 @@ def pin_hash(imagename, tag):
         old_hash = Images.objects.get_ipfs_hash_by_imagename_tag(
             imagename, tag)
         try:
-            with ipfshttpclient.connect(addr=host) as ipfs:
+            with ipfshttpclient.connect(addr=host, timeout=3600) as ipfs:
                 ipfs.pin.rm(old_hash)
             Images.objects.delete_image_id(old_image.get().id)
         except Exception as e:

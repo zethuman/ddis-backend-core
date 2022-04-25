@@ -1,2 +1,2 @@
 FROM busybox:latest
-CMD echo 'hell'
+CMD echo 'IPFS timing test'

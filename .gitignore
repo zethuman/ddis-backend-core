@@ -3,6 +3,6 @@ DDIS-DATA
 /logs/logs.log
 .idea
 Dockerfile.sample
-
+Dockerfile.base
 __pycache__
 *_initial.py

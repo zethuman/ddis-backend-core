@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 host = "/dns/localhost/tcp/5001/http" if not os.getenv(
     "IPFS_HOST") else os.getenv("IPFS_HOST")
+timeout = 3600 if not os.getenv(
+    'IPFS_TIMEOUT') else int(os.getenv('IPFS_TIMEOUT'))
 
 try:
     docker = dock.from_env()
@@ -45,7 +47,7 @@ def pull_an_image_by_hash(request):
     data = request.data
     path = tempfile.gettempdir()
     try:
-        with ipfshttpclient.connect(addr=host, timeout=3600) as ipfs:
+        with ipfshttpclient.connect(addr=host, timeout=timeout) as ipfs:
             ipfs.get(data["hash"], target=path, compress=True)
     except Exception as e:
         return error_msg(str(e))
@@ -78,7 +80,7 @@ def push_an_image(request):
             hashobject.update(chunk)
     if not Images.objects.find_image_by_file_hash(file_hash=hashobject.hexdigest()).exists():
         try:
-            with ipfshttpclient.connect(addr=host, timeout=3600) as ipfs:
+            with ipfshttpclient.connect(addr=host, timeout=timeout) as ipfs:
                 res = ipfs.add(tmp.name, pin=True)
                 pin_hash(data['name'], data['tag'])
                 logger.info(ipfs.repo)
@@ -86,9 +88,9 @@ def push_an_image(request):
             logger.error(e)
             return error_msg(str(e))
         try:
-            Images.objects.create_image(name=data["name"], tag=data["tag"], ipfs_hash=res["Hash"],
+            Images.objects.create_image(name=data["name"], tag=data["tag"], ipfs_hash=res["Hash"], image_id=image.id,
                                         file_hash=hashobject.hexdigest(), pin=True, size=res["Size"])
-            response = {"image": data["name"], "tag": data["tag"], "hash": res["Hash"],
+            response = {"image": data["name"], "tag": data["tag"], "image_id": image.id, "ipfs_hash": res["Hash"],
                         "file": res["Name"], "size": res["Size"]}
         except django.db.utils.IntegrityError as e:
             logger.error(e)
@@ -108,7 +110,7 @@ def pin_hash(imagename, tag):
         old_hash = Images.objects.get_ipfs_hash_by_imagename_tag(
             imagename, tag)
         try:
-            with ipfshttpclient.connect(addr=host, timeout=3600) as ipfs:
+            with ipfshttpclient.connect(addr=host, timeout=timeout) as ipfs:
                 ipfs.pin.rm(old_hash)
             Images.objects.delete_image_id(old_image.get().id)
         except Exception as e:

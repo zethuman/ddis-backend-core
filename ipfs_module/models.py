@@ -24,15 +24,17 @@ class ImagesManager(models.Manager):
         image.delete()
         return image
 
-    def create_image(self, name, tag, ipfs_hash, file_hash, pin, size):
+    def create_image(self, name, tag, image_id, ipfs_hash, file_hash, pin, size):
         image = self.create(
-            imagename=name, tag=tag, ipfs_hash=ipfs_hash, file_hash=file_hash, pin=pin, size=size)
+            imagename=name, tag=tag, image_id=image_id, ipfs_hash=ipfs_hash, file_hash=file_hash, pin=pin, size=size)
         image.save()
 
 
 class Images(models.Model):
     imagename = models.CharField('Image name', max_length=500)
     tag = models.CharField('Image tag', max_length=200)
+    image_id = models.CharField('ID of image in docker', max_length=100,
+                                default='', blank=False, null=False)
     ipfs_hash = models.CharField('Hash of image in ipfs', max_length=100,
                                  default='', blank=True, null=False)
     file_hash = models.CharField('Hash of image local', max_length=100,

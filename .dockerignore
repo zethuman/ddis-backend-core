@@ -1,6 +1,8 @@
-DDIS-DATA
+/DDIS-DATA
 .idea
 db/db.sqlite3
 /logs/logs.log
 docker-compose.yml
 .env
+Dockerfile.sample
+Dockerfile

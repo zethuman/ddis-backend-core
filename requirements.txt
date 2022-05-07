@@ -1,3 +1,4 @@
+anyio==3.5.0
 asgiref==3.5.0
 autopep8==1.6.0
 base58==2.1.1
@@ -6,10 +7,14 @@ charset-normalizer==2.0.12
 colorama==0.4.4
 Deprecated==1.2.13
 Django==4.0.2
+django-cors-headers==3.11.0
 django-filter==21.1
 djangorestframework==3.13.1
 dnspython==2.2.0
 docker==5.0.3
+h11==0.12.0
+httpcore==0.13.7
+httpx==1.0.0b0
 idna==3.3
 importlib-metadata==4.11.1
 ipfshttpclient==0.8.0a1
@@ -21,8 +26,11 @@ pycodestyle==2.8.0
 pyparsing==3.0.7
 pytz==2021.3
 requests==2.27.1
+rfc3986==1.5.0
 six==1.16.0
+sniffio==1.2.0
 sqlparse==0.4.2
+sseclient==0.0.24
 toml==0.10.2
 tzdata==2021.5
 urllib3==1.26.8
